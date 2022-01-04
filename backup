@@ -1,0 +1,285 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
+#include <locale>
+#include <cwctype>
+
+using namespace std;
+struct Location;
+struct Person;
+ostream& operator << (ostream& os, const Person& person);
+istream& operator >> (istream& is, const Person& person);
+
+void meny();
+vector<Person> file(const string &filename);
+size_t sokNamn(vector<Person>persons, string namn);
+vector<Person> sokStad(vector<Person>städer, string stad);
+
+struct Location 
+{
+    string gata;
+    int postnr;
+    string stad;
+};
+
+struct Person 
+{
+    string namn;
+    string id;
+    Location adress;
+};
+
+void meny()
+{
+    bool menyn = true;
+    string namn;
+
+    while ( menyn )
+    {
+        system("clear");
+
+        cout << "---- MENY ----" << endl;
+        cout << "1. Sök del av personnamn" << endl;
+        cout << "2. Sök stad" << endl;
+        cout << "3. Avsluta" << endl;
+
+        int alt;
+        cout << "Val: ";
+        cin >> noskipws >> alt;
+
+        vector<Person> p_vec;
+
+        if(alt == 1)
+        {
+            system ("clear");
+
+            p_vec = file("names.txt");
+
+            cin.ignore();
+            cout << "Skriv ett namn(börja med stor bokstav):" <<  endl;
+            getline(cin, namn);
+
+            for(int i = 0; i < namn.size(); ++i)
+            {
+                towlower(namn[i]);
+            } 
+
+            size_t x;
+            x = sokNamn( p_vec,namn );
+            if(namn.length() != 0)
+            {
+                if(x > 0)
+                {
+                    cout << "Hittade "<< x << " person/personer vid det namnet" << '\n' << endl;
+                    cout << "Tryck enter för att  komma tillbaka till menyn" << endl;
+                    cin.ignore(1000,'\n');
+                }
+                else if(x == 0)
+                {
+                    cout << "Hittade " << x << " personer vid det namnet" << '\n' << endl;
+                    cout << "Tryck enter för att  komma tillbaka till menyn" << endl;
+                    cin.ignore(1000,'\n');
+                }
+            }
+            else
+            {
+                system("clear");
+                cout << "Felaktig inmatning.." << '\n' << endl;
+                cout << "Tryck enter för att  komma tillbaka till menyn" << endl;
+                cin.ignore();
+            }
+        }
+
+        if(alt == 2)
+        {
+            system("clear");
+
+            string stad;
+            p_vec = file("names.txt");
+
+            vector<Person>v;
+            Person person;
+
+            cin.ignore();
+            cout << "Skriv en stad(med stora bokstäver):" << endl;
+            getline(cin, stad);
+
+            for(int i = 0; i < stad.size(); ++i)
+            {
+                string tmp;
+                towlower(stad[i]);
+            } 
+
+            system("clear");
+
+            cout << "Personer som bor i " << stad << ":" << '\n' << endl;
+
+            v = sokStad(p_vec, stad);
+            
+            for(unsigned int i = 0; i< v.size(); ++i)
+            {
+                cout << uppercase << v[i].namn << endl;
+            }
+
+            if(v.size() == 0)
+            {
+                cout << "Kunde inte hitta någon i den staden" << endl;
+            }
+
+            cout << "Tryck enter för att  komma tillbaka till menyn" << endl;
+            cin.ignore(1000,'\n');
+        }
+
+        if(alt == 3)
+        {
+            exit(0);
+        }
+
+        if(!cin)
+        {
+            system("clear");
+
+            cout << "Ogiltigt val" << '\n' << endl;
+            cin.clear();
+            cin.ignore(1000,'\n');
+            cout << "Tryck enter för att  komma tillbaka till menyn" << endl;
+            cin.ignore(1000,'\n');
+        }
+    }
+}
+
+int main() 
+{
+	setlocale(LC_ALL," ");
+	meny(); 
+return 0;
+}
+
+ostream& operator << (ostream& os, const Person& person)
+{
+	os << person.namn << endl;
+	os << person.id << endl;
+	os << person.adress.gata << ", " << person.adress.postnr << person.adress.stad << endl;
+	
+	return os;		
+}
+
+istream& operator >> (istream& is, Person& person)
+{
+	is >> person.namn;
+	is >> person.id;
+	is >> person.adress.gata;
+	is >> person.adress.postnr;
+	is >> person.adress.stad;
+	
+	return is;	
+}
+size_t sokNamn(vector<Person>personer, const string namn)
+{
+    
+    string low_case;
+    string up_case;
+    
+    Person person;
+
+    size_t antal = 0;
+    
+    for(unsigned int i = 0; i < personer.size(); ++i)
+    {
+        if(personer[i].namn.find(namn) != string::npos)
+        {
+            antal++;        
+        }
+    }
+    return antal;
+}
+
+vector <Person> sokStad(vector<Person>städer, string stad)
+{
+    vector<Person> v;
+    Person person;
+    string adress, namn;
+
+    for ( unsigned int i = 0; i < städer.size(); ++i )
+    {
+        adress = städer[i].adress.stad;
+
+        if ( adress == stad )
+        {
+            person.namn = städer[i].namn;
+            person.adress.stad = städer[i].adress.stad;
+            v.push_back(person); 
+        } 
+    }
+    return v;
+}
+vector <Person> file( const string &filename ) 
+{
+    //skapar vektor för  strukten personer
+    vector <Person> p_vec;
+    //skapar objekt  för  samma strukt
+    Person person;
+
+    ifstream in;
+    in.open( filename );
+
+    if(!in.is_open())
+    {
+        cout << "Error opening file!" << endl;
+        exit(0);
+    }
+
+    while(in.peek() != in.eof())
+    {
+        if(in.eof())
+            break;
+
+        getline(in, person.namn);
+        getline(in, person.id);
+        getline(in, person.adress.gata);
+
+        //lägger gatunamnet i en egen variabel
+        string tmp = person.adress.gata;
+        int pos = tmp.find(",");
+        string gata = tmp.substr(0,pos);
+        person.adress.gata = gata;
+
+        //lägger resten av adress raden i  en annan vvariabel
+        string adress = tmp.substr(pos+1);
+        istringstream iss(adress);
+
+        string postnr1, postnr2, postnr_stad1, postnr_stad2;
+        
+        //iss stringstream  lägger delar adress i
+        iss >> skipws >> postnr1 >> postnr2 >> postnr_stad1 >> postnr_stad2;
+        string postnr = postnr1 + postnr2;
+
+        //lägger ihop stad variablerna
+        string stad = postnr_stad1 + postnr_stad2;
+
+        if(stad.length() > postnr_stad1.length())
+        {
+            stad = postnr_stad1 + " " + postnr_stad2;
+        }
+        person.adress.stad = stad;
+        
+        for(int i = 0; i < person.adress.stad.size(); ++i)
+        {
+            towlower(person.adress.stad[i]);
+        }
+
+        //använd stoi för att omvandla string till int
+        int postnum = stoi(postnr);
+        person.adress.postnr = postnum;
+
+        for(int i = 0; i < person.namn.size(); ++i)
+        {
+            towlower( person.namn[i] );
+        }
+        p_vec.push_back( person );
+    }
+    return p_vec;
+}
